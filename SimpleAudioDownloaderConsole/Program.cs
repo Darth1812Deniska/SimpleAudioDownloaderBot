@@ -6,7 +6,10 @@ namespace SimpleAudioDownloaderConsole
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            string token = "TOKEN";
+            var TelegramDownloader = new TelegramDownloader(token);
+            Console.WriteLine();
+            Console.ReadKey();
         }
     }
 }

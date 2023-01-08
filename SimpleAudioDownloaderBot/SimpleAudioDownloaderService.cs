@@ -13,7 +13,7 @@ namespace SimpleAudioDownloaderBot
 {
     public partial class SimpleAudioDownloaderService : ServiceBase
     {
-        private readonly string telegamToken = "5877960883:AAHgsEv5mc0LkSHFemoczQa7z9Q38PmtNEU";
+        private readonly string telegamToken = "TOKEN";
         private  TelegramBotClient telegramBot;
 
         private string TelegamToken => telegamToken;
