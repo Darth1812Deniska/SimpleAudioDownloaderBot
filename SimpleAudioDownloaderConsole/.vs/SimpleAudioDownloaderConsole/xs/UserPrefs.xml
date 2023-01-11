@@ -1,0 +1,28 @@
+﻿<Properties StartupConfiguration="{8C6DD39D-B424-437D-B84F-BC944DD98B57}|Default">
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.SimpleAudioDownloaderConsole PreferredExecutionTarget="MonoDevelop.Default" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="TelegramMessage.cs">
+    <Files>
+      <File FileName="TelegramDownloader.cs" />
+      <File FileName="Program.cs" />
+      <File FileName="TelegramMessage.cs" Line="9" Column="35" />
+      <File FileName="YoutubeVideo.cs" />
+      <File FileName="ApplicationContext.cs" />
+      <File FileName="Chat.cs" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="SimpleAudioDownloaderConsole" expanded="True">
+            <Node name="SimpleAudioDownloaderConsole" expanded="True" />
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+</Properties>
