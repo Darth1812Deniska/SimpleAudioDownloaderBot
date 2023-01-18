@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -8,38 +9,32 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using YoutubeExplode;
+using YoutubeExplode.Videos.Streams;
+using File = System.IO.File;
 
 namespace SimpleAudioDownloaderConsole
 {
     public class TelegramDownloader
     {
         private  TelegramBotClient telegramBot;
+        private static YoutubeClient youtube = new YoutubeClient();
 
         private Queue<Message> Messages = new Queue<Message>();
         private Queue<Update> Updates = new Queue<Update>();
         private TelegramBotClient TelegramBot => telegramBot;
 
-        
+
         public TelegramDownloader(string token)
         {
             telegramBot = new TelegramBotClient(token);
-            Thread threadgetUpdates = new Thread(GetUpdates);
-            Thread threadGetMessages = new Thread(GetMessages);
             var cts = new CancellationTokenSource();
             var cancellationToken = cts.Token;
             var receiverOptions = new ReceiverOptions
             {
                 AllowedUpdates = { }, // разрешено получать все виды апдейтов
             };
-            TelegramBot.StartReceiving(
-                HandleUpdateAsync,
-            HandleErrorAsync,
-                receiverOptions,
-                cancellationToken
-            );
-            //threadgetUpdates.Start();
-            //threadGetMessages.Start();
-
+            TelegramBot.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cancellationToken);
         }
 
         public static async Task HandleUpdateAsync(
@@ -59,9 +54,7 @@ namespace SimpleAudioDownloaderConsole
                 var message = update.Message;
                 if (!string.IsNullOrEmpty(message.Text.ToLower()) )
                 {
-                    //await DataBaseMethods.ToggleInDialogStatus(update.Message.Chat.Id, 0);
-                    await botClient.SendTextMessageAsync(chatId: message.Chat, text: message.Text);
-                    await botClient.SendTextMessageAsync(chatId: message.Chat, text: "Привет");
+                    await Task.Factory.StartNew(()=> SendTestMessageAsync(botClient, update));
 
                     return;
                 }
@@ -82,36 +75,40 @@ namespace SimpleAudioDownloaderConsole
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(exception));
         }
 
-        void GetUpdates()
+        public static async Task SendTestMessageAsync(ITelegramBotClient bot, Update update)
         {
-            while(true)
+            // 
+            // Парсим сообщение - проверям ссылка ли это
+            var message = update.Message;
+            string messaageText = message.Text;
+            var chat = message.Chat;
+            var video = await youtube.Videos.GetAsync(messaageText);
+            if (video != null) 
             {
-                var updates = TelegramBot.GetUpdatesAsync().Result;
-                //TelegramBot.
-                Console.WriteLine(updates.Count().ToString());
-                var orderedUpdates = updates.Where(x =>x.Type==UpdateType.Message)
-                    .ToList();
-                foreach (var update in orderedUpdates)
+                var title = video.Title;
+                var author = video.Author;
+                string messageText = $"{author} {title}";
+                var streamManifest = await youtube.Videos.Streams.GetManifestAsync(messaageText);
+                var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+                //streamInfo.Url
+                //var stream = await youtube.Videos.Streams.GetAsync(streamInfo);
+                await youtube.Videos.Streams.DownloadAsync(streamInfo, $"{messageText}.{streamInfo.Container}");
+                
+                using (FileStream audio = File.OpenRead($"{messageText}.{streamInfo.Container}"))
                 {
-                    Updates.Enqueue(update);
+                    await bot.SendAudioAsync(chat, audio);
                 }
-                Thread.Sleep(2000);
+                await bot.SendTextMessageAsync(chatId: chat, text: messageText);
             }
-        }
-
-
-
-        void GetMessages()
-        {
-            while(true)
+            /*var message = update.Message;
+            string mainMessaageText = message.Text;
+            var chat = message.Chat;
+            string messageText = $"Ответ на сообщение \"{mainMessaageText}\"";
+            for (int i = 0; i < 10; i++)
             {
-                if (Updates.Count > 0)
-                {
-                    Update update = Updates.Dequeue();
-                    Console.WriteLine(update.Message.Text);
-                }
-                Thread.Sleep(1000);
+                bot.SendTextMessageAsync(chatId: chat, text: $"{messageText} №{i}");
             }
+            */
         }
     }
 }
