@@ -37,7 +37,7 @@ namespace SimpleAudioDownloaderConsole
             TelegramBot.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cancellationToken);
         }
 
-        public static async Task HandleUpdateAsync(
+        public  async Task HandleUpdateAsync(
             ITelegramBotClient botClient,
             Update update,
             CancellationToken cancellationToken
@@ -65,7 +65,7 @@ namespace SimpleAudioDownloaderConsole
             }
         }
 
-        public static async Task HandleErrorAsync(
+        public  async Task HandleErrorAsync(
             ITelegramBotClient botClient,
             Exception exception,
             CancellationToken cancellationToken
@@ -75,10 +75,8 @@ namespace SimpleAudioDownloaderConsole
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(exception));
         }
 
-        public static async Task SendTestMessageAsync(ITelegramBotClient bot, Update update)
+        public  async Task SendTestMessageAsync(ITelegramBotClient bot, Update update)
         {
-            // 
-            // Парсим сообщение - проверям ссылка ли это
             var message = update.Message;
             string messaageText = message.Text;
             var chat = message.Chat;
@@ -86,29 +84,31 @@ namespace SimpleAudioDownloaderConsole
             if (video != null) 
             {
                 var title = video.Title;
-                var author = video.Author;
+                var author = video.Author.ChannelTitle;
+                var duration = ((int)video.Duration.Value.TotalSeconds);
                 string messageText = $"{author} {title}";
-                var streamManifest = await youtube.Videos.Streams.GetManifestAsync(messaageText);
-                var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+                StreamManifest streamManifest = await youtube.Videos.Streams.GetManifestAsync(messaageText);
+                var streamInfo = GetOptimalAudioStreamInfo(streamManifest);
+                //var streamSize = streamInfo.Size.MegaBytes;
+                //await bot.SendTextMessageAsync(chatId: chat, text: streamSize.ToString());
                 //streamInfo.Url
                 //var stream = await youtube.Videos.Streams.GetAsync(streamInfo);
-                await youtube.Videos.Streams.DownloadAsync(streamInfo, $"{messageText}.{streamInfo.Container}");
-                
-                using (FileStream audio = File.OpenRead($"{messageText}.{streamInfo.Container}"))
+                await youtube.Videos.Streams.DownloadAsync(streamInfo, $"{video.Id.Value}.{streamInfo.Container}");
+
+                using (FileStream audio = File.OpenRead($"{video.Id.Value}.{streamInfo.Container}"))
                 {
-                    await bot.SendAudioAsync(chat, audio);
+                    await bot.SendAudioAsync(chatId:chat, audio:audio,duration:duration, performer:author, title:title);
                 }
-                await bot.SendTextMessageAsync(chatId: chat, text: messageText);
+                await bot.SendTextMessageAsync(chatId: chat, text: messageText); 
             }
-            /*var message = update.Message;
-            string mainMessaageText = message.Text;
-            var chat = message.Chat;
-            string messageText = $"Ответ на сообщение \"{mainMessaageText}\"";
-            for (int i = 0; i < 10; i++)
-            {
-                bot.SendTextMessageAsync(chatId: chat, text: $"{messageText} №{i}");
-            }
-            */
         }
+
+        private AudioOnlyStreamInfo GetOptimalAudioStreamInfo(StreamManifest streamManifest)
+        {
+            var audioStreamsInfo = streamManifest.GetAudioOnlyStreams();
+            return audioStreamsInfo.Where(x => (x.Container == Container.Mp4 || x.Container == Container.Mp3) && x.Size.MegaBytes < 50).MaxBy(x => x.Size);
+        }
+
+
     }
 }
