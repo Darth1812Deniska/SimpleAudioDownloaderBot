@@ -13,6 +13,7 @@
 x64/
 [Bb]in/
 [Oo]bj/
+.vs/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
@@ -131,11 +132,3 @@ $RECYCLE.BIN/
 .DS_Store
 
 _NCrunch*
-
-*.v2
-
-*.2
-
-*.lock
-
-*.vsidx
